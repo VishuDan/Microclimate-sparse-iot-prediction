@@ -10,7 +10,7 @@ on:
       start_date:
         default: "2026-08-01"
       end_date:
-        default: "2026-08-24"
+        default: "2026-08-18"
       grid_size:
         default: "5"
       spacing_km:
