@@ -57,9 +57,14 @@ def fetch_point(lat, lon, start_date, end_date):
         "timezone": "auto",
     }
     resp = requests.get(ARCHIVE_URL, params=params, timeout=30)
-    resp.raise_for_status()
+    if resp.status_code != 200:
+        try:
+            reason = resp.json().get("reason", resp.text)
+        except ValueError:
+            reason = resp.text
+        raise requests.exceptions.HTTPError(f"{resp.status_code} error: {reason}")
     data = resp.json()
-
+    
     df = pd.DataFrame(data["hourly"])
     df["latitude"] = lat
     df["longitude"] = lon
