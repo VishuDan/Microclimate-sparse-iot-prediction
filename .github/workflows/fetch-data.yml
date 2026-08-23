@@ -1,0 +1,51 @@
+name: Fetch Weather Data
+
+on:
+  workflow_dispatch:
+    inputs:
+      center_lat:
+        default: "30.27247519898127"
+      center_lon:
+        default: "78.0012824465569"
+      start_date:
+        default: "2026-08-01"
+      end_date:
+        default: "2026-08-24"
+      grid_size:
+        default: "5"
+      spacing_km:
+        default: "0.3"
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests pandas
+
+      - name: Run fetch script
+        run: |
+          mkdir -p data/raw
+          python src/fetch_weather_data.py \
+            --center_lat ${{ github.event.inputs.center_lat }} \
+            --center_lon ${{ github.event.inputs.center_lon }} \
+            --start_date ${{ github.event.inputs.start_date }} \
+            --end_date ${{ github.event.inputs.end_date }} \
+            --grid_size ${{ github.event.inputs.grid_size }} \
+            --spacing_km ${{ github.event.inputs.spacing_km }} \
+            --out data/raw/weather_grid.csv
+
+      - name: Commit and push data
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Automated: fetch weather grid data"
+          file_pattern: data/raw/*.csv
