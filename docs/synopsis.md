@@ -30,6 +30,13 @@ Nodes are placed at microclimatically distinct points (e.g., open field, under c
 
 **Secondary (simulation/backup):** Historical hourly weather data pulled via the **Open-Meteo API** for the campus/farm's bounding box, used to (a) bootstrap and validate the pipeline before hardware deployment is complete, and (b) create a larger synthetic "sparse network" by subsampling grid points as pseudo-sensors and holding out others as ground truth — a standard technique for testing spatial interpolation methods when real deployment is limited.
 
+## Data Resolution Limitation (discovered Day 2)
+
+Exploratory analysis of the Open-Meteo Archive API data revealed that it is backed by a reanalysis model (ERA5) with a native spatial resolution on the order of several kilometers. A diagnostic test confirmed this directly: two points ~15km apart showed a 4.3°C difference in average temperature over the same period, while a 5×5 grid spaced only 0.3km apart returned identical average values across all points (26.44°C, zero variation).
+
+This means the Open-Meteo dataset can validate the modeling pipeline (interpolation, forecasting, evaluation harness) but cannot itself demonstrate sub-kilometer "hyperlocal" microclimate variation — it structurally lacks the resolution to see effects like canopy shade, building shadowing, or localized soil moisture differences. This is precisely the gap the physical ESP32 sensor network is designed to fill: sensors placed a few hundred meters apart across genuinely different microclimate zones (open field, under canopy, near a wall, near water) can capture real variation that no reanalysis product resolves.
+
+Practical implication: for pipeline development and testing, the synthetic grid is now spaced 5-15km apart (rather than 0.3km) to generate non-degenerate spatial data. The tighter 0.3km hyperlocal claim is reserved for, and validated against, the real physical sensor deployment.
 ## Methodology
 1. **Data pipeline:** Ingest sensor + API data, clean, timestamp-align, handle missing values.
 2. **Spatial interpolation baselines:** Inverse Distance Weighting → Gaussian Process Regression / Kriging → Random Forest with distance/elevation features.
