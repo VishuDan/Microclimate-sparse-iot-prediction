@@ -16,3 +16,9 @@
 - Added lapse-rate elevation correction: MAE improved from 5.38°C to 3.92°C
 - Added cyclical time features (hour, day-of-year)
 - Saved feature table to data/processed/features.csv, noted residual ~2-3°C gap for future investigation
+## Day 4 — [date]
+- Ran leave-node-out CV (GroupKFold) comparing plain IDW, elevation-corrected IDW, GPR, and Random Forest on 49-node grid
+- GPR initially exploded (MAE up to 677°C) due to unbounded kernel hyperparameters extrapolating badly on constant per-node features
+- Fixed via ARD kernel with explicit bounds + increased alpha; also found and fixed a stale-results bug from not resetting the results dict between runs
+- Final results: Elevation-corrected IDW 3.92°C < Plain IDW 4.41°C < GPR 4.84°C < Random Forest 7.00°C
+- Conclusion: physically-informed baseline beats general ML here due to limited elevation diversity (223-287m) across only 8 held-out target nodes
