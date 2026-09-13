@@ -39,6 +39,18 @@ This means the Open-Meteo dataset can validate the modeling pipeline (interpolat
 Practical implication: for pipeline development and testing, the synthetic grid is now spaced 5-15km apart (rather than 0.3km) to generate non-degenerate spatial data. The tighter 0.3km hyperlocal claim is reserved for, and validated against, the real physical sensor deployment.
 ## Elevation effects (Day 3)
 Distance-only IDW interpolation showed a consistent ~5°C cold bias at a low-elevation target node relative to its higher-elevation nearest neighbors (270m average elevation gap). Applying a standard lapse-rate correction (6.5°C/km) reduced MAE from 5.38°C to 3.92°C (~27% improvement), confirming elevation as a significant feature for this terrain. A residual ~2-3°C gap remains, likely attributable to valley-floor heat-trapping/reduced ventilation effects not captured by elevation alone — a useful motivator for the physical sensor deployment.
+## Model comparison results (Day 4)
+Leave-node-out cross-validation (GroupKFold, 4 folds over a 49-node synthetic grid at 30km spacing) compared four approaches for predicting temperature at held-out nodes: plain IDW, elevation-corrected IDW (lapse-rate 6.5°C/km), Gaussian Process Regression, and Random Forest. Results:
+
+| Method | MAE |
+|---|---|
+| Elevation-corrected IDW | 3.92°C |
+| Plain IDW | 4.41°C |
+| Gaussian Process Regression | 4.84°C |
+| Random Forest | 7.00°C |
+
+The physically-informed elevation-corrected IDW baseline outperformed both general-purpose ML models. Investigation showed this is driven by limited elevation diversity across the 8 held-out target nodes (a narrow 223-287m range) combined with elevation being a near-constant, per-node feature — leaving insufficient variation for data-driven models to learn a correction better than the hand-applied lapse rate. GPR additionally required explicit kernel hyperparameter bounds (ARD length scales, bounded constant/noise terms) to avoid catastrophic divergence (initial unbounded-kernel runs produced MAE values as high as 677°C on out-of-distribution folds) — a documented failure mode of GPR when extrapolating with near-duplicate static features. This result motivates a shift toward temporal forecasting methods (LSTM) for Day 5, where the literature (see literature review, papers 1, 9, 10) shows clearer, more consistent gains over classical baselines than spatial interpolation currently does on this dataset.
+
 ## Methodology
 1. **Data pipeline:** Ingest sensor + API data, clean, timestamp-align, handle missing values.
 2. **Spatial interpolation baselines:** Inverse Distance Weighting → Gaussian Process Regression / Kriging → Random Forest with distance/elevation features.
