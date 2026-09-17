@@ -28,3 +28,7 @@
 - Validated naive baseline consistency across 6 more nodes (0.50-0.79°C range) to confirm generalization
 - Identified known issue: ~29% of grid nodes failed to fetch (14/49) — retry logic needed in fetch script
 - Contrast with Day 4: temporal modeling gave a clean, reliable win; spatial modeling did not
+## Day 6 — Sep 17
+- Added retry-with-backoff (up to 3 attempts, exponential wait) to fetch_weather_data.py, plus widened exception handling and increased inter-request delay to 1.0s
+- Re-ran fetch on same 7x7/30km grid: node coverage improved from 35/49 (71%) to 47/49 (96%)
+- Remaining 2 missing nodes treated as acceptable residual failure, not investigated further
