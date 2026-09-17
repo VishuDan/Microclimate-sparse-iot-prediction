@@ -29,6 +29,8 @@
 - Identified known issue: ~29% of grid nodes failed to fetch (14/49) — retry logic needed in fetch script
 - Contrast with Day 4: temporal modeling gave a clean, reliable win; spatial modeling did not
 ## Day 6 — Sep 17
-- Added retry-with-backoff (up to 3 attempts, exponential wait) to fetch_weather_data.py, plus widened exception handling and increased inter-request delay to 1.0s
-- Re-ran fetch on same 7x7/30km grid: node coverage improved from 35/49 (71%) to 47/49 (96%)
-- Remaining 2 missing nodes treated as acceptable residual failure, not investigated further
+- Fixed fetch script reliability: retry-with-backoff, coverage improved 35/49 → 47/49 nodes
+- Re-ran Day 3/4 pipeline on fuller 47-node dataset (11 target nodes, 11-fold leave-one-out CV)
+- Fixed a hardcoded-value bug from Day 5 (elevation-corrected IDW chart was showing stale 3.92°C instead of live data)
+- Real trustworthy results: Plain IDW 5.87°C < GPR 6.34°C < Elevation-corrected IDW 6.38°C < Random Forest 7.51°C
+- Key finding: fixed global lapse-rate correction, which helped substantially on the small 8-node sample, does NOT generalize cleanly across more topographically diverse nodes — motivates a per-node/learned correction rather than one constant
