@@ -47,7 +47,7 @@ def make_grid(center_lat, center_lon, grid_size, spacing_km):
     return points
 
 
-def fetch_point(lat, lon, start_date, end_date):
+def fetch_point(lat, lon, start_date, end_date, max_retries=3):
     params = {
         "latitude": lat,
         "longitude": lon,
@@ -56,19 +56,28 @@ def fetch_point(lat, lon, start_date, end_date):
         "hourly": ",".join(HOURLY_VARS),
         "timezone": "auto",
     }
-    resp = requests.get(ARCHIVE_URL, params=params, timeout=30)
-    if resp.status_code != 200:
+    last_error = None
+    for attempt in range(1, max_retries + 1):
         try:
-            reason = resp.json().get("reason", resp.text)
-        except ValueError:
-            reason = resp.text
-        raise requests.exceptions.HTTPError(f"{resp.status_code} error: {reason}")
-    data = resp.json()
-    
-    df = pd.DataFrame(data["hourly"])
-    df["latitude"] = lat
-    df["longitude"] = lon
-    return df
+            resp = requests.get(ARCHIVE_URL, params=params, timeout=30)
+            if resp.status_code != 200:
+                try:
+                    reason = resp.json().get("reason", resp.text)
+                except ValueError:
+                    reason = resp.text
+                raise requests.exceptions.HTTPError(f"{resp.status_code} error: {reason}")
+            data = resp.json()
+            df = pd.DataFrame(data["hourly"])
+            df["latitude"] = lat
+            df["longitude"] = lon
+            return df
+        except (requests.exceptions.RequestException, KeyError) as e:
+            last_error = e
+            if attempt < max_retries:
+                wait = 2 ** attempt  # 2s, 4s, 8s
+                print(f"    attempt {attempt} failed ({e}), retrying in {wait}s...")
+                time.sleep(wait)
+    raise last_error
 
 
 def main():
@@ -92,9 +101,9 @@ def main():
             df["node_id"] = node_id
             all_dfs.append(df)
             print(f"  fetched {node_id} ({lat}, {lon}) — {len(df)} rows")
-        except requests.exceptions.RequestException as e:
-            print(f"  failed for {node_id} ({lat}, {lon}): {e}")
-        time.sleep(0.5)  # be polite to the free API
+        except (requests.exceptions.RequestException, KeyError) as e:
+            print(f"  failed for {node_id} ({lat}, {lon}) after retries: {e}")
+        time.sleep(1.0)  # was 0.5 — give the free API more breathing room
 
     if not all_dfs:
         raise RuntimeError("No data fetched — check your dates/coordinates and internet connection.")
