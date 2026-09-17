@@ -54,6 +54,17 @@ The physically-informed elevation-corrected IDW baseline outperformed both gener
 A per-node LSTM (single layer, 32 hidden units, 24-hour lookback window) was trained to forecast 1-hour-ahead temperature at node_0_0, and compared against a naive persistence baseline (predicting t+1 = t). The LSTM achieved 0.49°C MAE versus 0.60°C for naive persistence, an 18% improvement, with stable training convergence and no divergence issues (in contrast to the GPR instability seen in Day 4). Naive persistence MAE was checked across 6 additional nodes (range: 0.50-0.79°C) to confirm the baseline behaves consistently across the grid rather than being specific to one node, supporting that the LSTM's improvement is likely to generalize. This result, combined with the Day 4 finding that spatial ML models underperformed a physically-informed baseline, suggests temporal structure is currently a stronger and more reliable signal than spatial structure for this dataset — consistent with the literature review (papers 1, 9, 16), which similarly found LSTM outperforming classical temporal baselines in comparable sparse IoT deployments.
 
 **Known issue identified:** approximately 14 of 49 grid nodes (~29%) failed to fetch during the Day 4 data pull, likely due to API timeout/rate-limiting on rapid sequential requests. Retry logic for the fetch script is planned before final sensor-network validation.
+## Update: results at full scale (Day 6)
+After fixing a data-fetch reliability issue (retry logic improved node coverage from 35/49 to 47/49), the model comparison was re-run on the fuller dataset — 11 target nodes and 11-fold leave-one-out CV, versus the original 8 nodes/4 folds. The updated results:
+
+| Method | MAE |
+|---|---|
+| Plain IDW | 5.87°C |
+| Gaussian Process Regression | 6.34°C |
+| Elevation-corrected IDW | 6.38°C |
+| Random Forest | 7.51°C |
+
+Notably, elevation-corrected IDW's advantage from the smaller sample did not hold at full scale — it is now marginally worse than plain IDW, reversing the Day 4 conclusion. The most likely explanation is that a single fixed lapse rate (6.5°C/km) was a good fit for the original 8-node sample, where target-to-sensor elevation differences happened to be consistent in direction, but does not generalize across a more topographically diverse 11-node set, where the true local lapse rate likely varies by terrain and aspect. This motivates a per-node or regression-learned elevation correction as a future improvement, rather than one global constant. This progression — a promising small-sample result that did not fully hold up as the evaluation set grew — is itself a useful methodological finding: small-sample cross-validation in sparse-sensor settings can be unstable, and conclusions should be revisited as more data becomes available.
 
 ## Methodology
 1. **Data pipeline:** Ingest sensor + API data, clean, timestamp-align, handle missing values.
