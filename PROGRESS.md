@@ -34,3 +34,9 @@
 - Fixed a hardcoded-value bug from Day 5 (elevation-corrected IDW chart was showing stale 3.92°C instead of live data)
 - Real trustworthy results: Plain IDW 5.87°C < GPR 6.34°C < Elevation-corrected IDW 6.38°C < Random Forest 7.51°C
 - Key finding: fixed global lapse-rate correction, which helped substantially on the small 8-node sample, does NOT generalize cleanly across more topographically diverse nodes — motivates a per-node/learned correction rather than one constant
+## Day 7 — Sep 19
+- Tested learned per-fold linear regression (residual ~ elevation) as an alternative to the fixed 6.5°C/km lapse rate
+- Result: worse than fixed correction (7.96°C vs 6.38°C avg MAE), with physically implausible learned slopes across folds (-88 to +200°C/km vs real-world ~4-10°C/km)
+- Root cause: narrow 64m elevation range across nodes provides too little signal for any reliable elevation-based correction, fixed or learned
+- Conclusion: plain IDW (5.87°C) remains the strongest baseline at full scale; elevation-correction line of investigation is exhausted for this dataset
+- Decision: shift remaining time toward extending LSTM forecasting (proven 18% improvement) across all nodes rather than continuing spatial-correction refinement
