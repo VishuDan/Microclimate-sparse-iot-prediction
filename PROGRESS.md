@@ -37,6 +37,11 @@
 ## Day 7 — Sep 19
 - Tested learned per-fold linear regression (residual ~ elevation) as an alternative to the fixed 6.5°C/km lapse rate
 - Result: worse than fixed correction (7.96°C vs 6.38°C avg MAE), with physically implausible learned slopes across folds (-88 to +200°C/km vs real-world ~4-10°C/km)
-- Root cause: narrow 64m elevation range across nodes provides too little signal for any reliable elevation-based correction, fixed or learned
+- Root cause: narrow 64m elevation range across nodes provides too little signal for any reliable elevation-based correction, fixed or learned.
+## Day 8 — Sep 20
+- Extended per-node LSTM forecasting from 1 test node to all 46 valid nodes
+- Strong result: 44/46 nodes beat naive persistence, avg 18% improvement (0.67°C → 0.54°C MAE), consistent across full range of node difficulty
+- Tested a pooled LSTM (one model, all nodes combined) as an alternative — performed worse than naive baseline (0.77°C), diagnosed cause: no node-identity feature, so predictions blur toward a global mean across different elevation baselines
+- Conclusion: per-node LSTM forecasting is the project's strongest, most generalizable result; pooled model needs node-identity features to be viable (flagged as future work, not pursued today)
 - Conclusion: plain IDW (5.87°C) remains the strongest baseline at full scale; elevation-correction line of investigation is exhausted for this dataset
 - Decision: shift remaining time toward extending LSTM forecasting (proven 18% improvement) across all nodes rather than continuing spatial-correction refinement
