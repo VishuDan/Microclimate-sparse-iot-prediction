@@ -45,3 +45,8 @@
 - Conclusion: per-node LSTM forecasting is the project's strongest, most generalizable result; pooled model needs node-identity features to be viable (flagged as future work, not pursued today)
 - Conclusion: plain IDW (5.87°C) remains the strongest baseline at full scale; elevation-correction line of investigation is exhausted for this dataset
 - Decision: shift remaining time toward extending LSTM forecasting (proven 18% improvement) across all nodes rather than continuing spatial-correction refinement
+## Day 9 — Sep 22
+- Fixed the pooled LSTM's Day 8 failure by normalizing each node's data with its own training mean/std before pooling, de-normalizing per-node at inference
+- Result: pooled LSTM (normalized) = 0.53°C MAE — matches/slightly beats the 46-separate-per-node-model average (0.54°C), using only one model instead of 46
+- Confirms root cause from Day 8 was purely baseline mismatch, not differing per-node dynamics
+- Practical implication: a single pooled+normalized model is deployment-ready for new sensors with no prior history — directly relevant to the upcoming physical ESP32 rollout
