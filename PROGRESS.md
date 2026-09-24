@@ -50,3 +50,9 @@
 - Result: pooled LSTM (normalized) = 0.53°C MAE — matches/slightly beats the 46-separate-per-node-model average (0.54°C), using only one model instead of 46
 - Confirms root cause from Day 8 was purely baseline mismatch, not differing per-node dynamics
 - Practical implication: a single pooled+normalized model is deployment-ready for new sensors with no prior history — directly relevant to the upcoming physical ESP32 rollout
+## Day 10 — Sep 24
+- Built GCN-based GNN stretch goal (k=4 nearest-neighbor graph, current snapshot + elevation as node features)
+- Initial run: same global-normalization mistake as Day 8's pooled LSTM — MAE 1.74°C
+- Fixed with per-node normalization: MAE improved to 0.76°C, still behind naive (0.67°C) and both LSTM variants (0.53-0.54°C)
+- Diagnosed cause: GNN only sees current-hour snapshot, no temporal lookback — unlike LSTM's 24h window
+- Conclusion: graph structure alone (without temporal history) isn't sufficient at this node density; consistent with literature review's spatiotemporal GNN papers, which combine both. Closed as a legitimate, well-explained negative result
