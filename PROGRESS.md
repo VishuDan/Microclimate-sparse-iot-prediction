@@ -56,3 +56,7 @@
 - Fixed with per-node normalization: MAE improved to 0.76°C, still behind naive (0.67°C) and both LSTM variants (0.53-0.54°C)
 - Diagnosed cause: GNN only sees current-hour snapshot, no temporal lookback — unlike LSTM's 24h window
 - Conclusion: graph structure alone (without temporal history) isn't sufficient at this node density; consistent with literature review's spatiotemporal GNN papers, which combine both. Closed as a legitimate, well-explained negative result
+## Day 11 — Sep 25
+- Built interactive Plotly microclimate map (IDW-interpolated contour + sensor markers) for a peak-afternoon snapshot
+- Exported as standalone HTML, added to docs/microclimate_map.html
+- Important finding: full 47-node grid shows a much larger elevation/temperature range (~5-32°C) than the 223-287m subset used in Day 3-9 CV evaluation — likely because the grid extends from valley to high Himalayan terrain northward; earlier elevation-correction conclusions apply to the tested low-elevation subset, not necessarily the full terrain diversity. Noted as an important limitation/caveat for the final report.
