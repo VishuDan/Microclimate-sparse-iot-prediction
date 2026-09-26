@@ -66,6 +66,22 @@ After fixing a data-fetch reliability issue (retry logic improved node coverage 
 
 Notably, elevation-corrected IDW's advantage from the smaller sample did not hold at full scale — it is now marginally worse than plain IDW, reversing the Day 4 conclusion. The most likely explanation is that a single fixed lapse rate (6.5°C/km) was a good fit for the original 8-node sample, where target-to-sensor elevation differences happened to be consistent in direction, but does not generalize across a more topographically diverse 11-node set, where the true local lapse rate likely varies by terrain and aspect. This motivates a per-node or regression-learned elevation correction as a future improvement, rather than one global constant. This progression — a promising small-sample result that did not fully hold up as the evaluation set grew — is itself a useful methodological finding: small-sample cross-validation in sparse-sensor settings can be unstable, and conclusions should be revisited as more data becomes available.
 
+## Correction (Day 11): elevation-correction findings revised
+A data pipeline bug was discovered while building the Day 11 visualization: node_id labels (e.g. node_6_3) represent relative grid positions whose actual coordinates depend on the grid configuration used at fetch time, which changed over the project. A features file generated once and reused across later sessions therefore had elevation values mismatched with current node coordinates (confirmed directly: node_6_3 showed 223m in the saved file vs. 2104m at its actual current location, a ~1900m discrepancy). This invalidates the elevation-correction conclusions reported on Days 3, 4, 6, 7, and 9.
+
+The pipeline was rebuilt end-to-end in a single session (no intermediate file round-trip) and re-evaluated with all 47 nodes as leave-one-out CV targets, revealing the true elevation range across the grid is 223m–4876m — far wider than the ~223-287m subset previously (unknowingly) tested. Corrected results:
+
+| Method | MAE |
+|---|---|
+| Random Forest | 1.52°C |
+| Plain IDW | 1.87°C |
+| Learned elevation correction | 1.97°C |
+| Fixed 6.5°C/km correction | 3.79°C |
+| Gaussian Process Regression | 3.97°C |
+
+Random Forest, previously the weakest model, is now the strongest — consistent with it requiring genuine feature diversity to learn useful splits, which the earlier narrow-elevation subset did not provide. The fixed lapse-rate correction now actively hurts performance, likely because plain IDW's neighbor-weighted average already captures real elevation-driven cooling once neighbors genuinely span thousands of meters of elevation; adding a second physical correction on top overcorrects. The learned correction's slope is now stable and physically plausible (-0.58 to -1.19°C/km across folds), supporting this explanation.
+
+The project's temporal forecasting results (LSTM, pooled LSTM, GNN — Days 5, 8, 9, 10) are unaffected, as those notebooks fetched data fresh within each session rather than depending on a saved intermediate file.
 ## Methodology
 1. **Data pipeline:** Ingest sensor + API data, clean, timestamp-align, handle missing values.
 2. **Spatial interpolation baselines:** Inverse Distance Weighting → Gaussian Process Regression / Kriging → Random Forest with distance/elevation features.
