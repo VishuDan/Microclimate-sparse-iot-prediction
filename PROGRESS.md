@@ -57,6 +57,9 @@
 - Diagnosed cause: GNN only sees current-hour snapshot, no temporal lookback — unlike LSTM's 24h window
 - Conclusion: graph structure alone (without temporal history) isn't sufficient at this node density; consistent with literature review's spatiotemporal GNN papers, which combine both. Closed as a legitimate, well-explained negative result
 ## Day 11 — Sep 25
-- Built interactive Plotly microclimate map (IDW-interpolated contour + sensor markers) for a peak-afternoon snapshot
-- Exported as standalone HTML, added to docs/microclimate_map.html
-- Important finding: full 47-node grid shows a much larger elevation/temperature range (~5-32°C) than the 223-287m subset used in Day 3-9 CV evaluation — likely because the grid extends from valley to high Himalayan terrain northward; earlier elevation-correction conclusions apply to the tested low-elevation subset, not necessarily the full terrain diversity. Noted as an important limitation/caveat for the final report.
+- Built interactive Plotly microclimate map; discovered a major data pipeline bug in doing so
+- Root cause: node_id is a relative grid position, not a fixed location — coordinates shift when grid_size/spacing change, so a features.csv saved in one session became mismatched with a later session's live data
+- Rebuilt the full elevation-correction pipeline in one self-consistent session across all 47 nodes (true elevation range: 223m-4876m, much wider than previously tested)
+- Corrected results reverse several earlier conclusions: Random Forest is now best (1.52°C), fixed lapse-rate correction now hurts (3.79°C, overcorrects on top of what IDW already captures)
+- LSTM/pooled-LSTM/GNN results (Days 5, 8-10) confirmed unaffected — those notebooks always fetched data fresh
+- Added a "Correction" section to synopsis documenting the bug and revised findings transparently
